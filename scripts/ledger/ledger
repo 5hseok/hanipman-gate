@@ -1,0 +1,3 @@
+#!/bin/sh
+# ledger — 결정 원장 CLI 진입점. 절대경로를 쓰지 않는다.
+exec python3 "$(cd "$(dirname "$0")" && pwd)/ledger.py" "$@"

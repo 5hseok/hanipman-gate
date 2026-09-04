@@ -1,0 +1,39 @@
+{
+  "_comment": "섹션 헤딩 별칭 맵. 파서는 aliases 전부를 인식하고, 쓰기는 lang 이 가리키는 표기를 쓴다.",
+  "roles": {
+    "current": {
+      "ko": "## 현재 설계",
+      "en": "## Current Design",
+      "aliases": ["## 현재 설계", "## Current Design"]
+    },
+    "queue": {
+      "ko": "## 작업 큐",
+      "en": "## Work Queue",
+      "aliases": ["## 작업 큐", "## Work Queue"]
+    },
+    "ledger": {
+      "ko": "## 결정 로그",
+      "en": "## Decision Log",
+      "aliases": ["## 결정 로그", "## Decision Log"]
+    },
+    "progress": {
+      "ko": "## 진행 로그",
+      "en": "## Progress Log",
+      "aliases": ["## 진행 로그", "## Progress Log"]
+    },
+    "related": {
+      "ko": "## 관련 파일",
+      "en": "## Related Files",
+      "aliases": ["## 관련 파일", "## Related Files"]
+    },
+    "meta": {
+      "ko": "## 메타데이터",
+      "en": "## Metadata",
+      "aliases": ["## 메타데이터", "## Metadata"]
+    }
+  },
+  "slice_status": {
+    "ko": ["대기", "구현중", "게이트", "검수대기", "승인", "커밋", "보류"],
+    "en": ["waiting", "implementing", "gating", "review", "approved", "committed", "on-hold"]
+  }
+}
