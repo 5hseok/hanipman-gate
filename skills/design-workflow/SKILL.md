@@ -1,7 +1,7 @@
 ---
 name: design-workflow
 user-invocable: true
-description: '설계를 결정 원장(obsidian-log decide)에 확정하고 리뷰 크기 슬라이스로 구현하는 절차. 체크포인트 커밋 트리거, 리스크 티어, 리뷰 산출물 규칙 포함. 설계→구현 작업을 시작하거나 커밋 분할 기준이 필요할 때 참조.'
+description: '설계를 결정 원장(ledger decide)에 확정하고 리뷰 크기 슬라이스로 구현하는 절차. 체크포인트 커밋 트리거, 리스크 티어, 리뷰 산출물 규칙 포함. 설계→구현 작업을 시작하거나 커밋 분할 기준이 필요할 때 참조.'
 ---
 
 # Design Workflow
@@ -17,13 +17,13 @@ base branch, and risk areas are read from the project at runtime, never assumed 
 
 ## Decision Ledger
 
-Design decisions live in the Obsidian task document, in four sections:
+Design decisions live in the ledger task document, in four sections:
 `## 현재 설계` (confirmed decisions only) · `## 작업 큐` (implementation slices) ·
 `## 결정 로그` (append-only) · `## 진행 로그`.
 
 | Rule | Detail |
 |---|---|
-| **No direct body append** | Never append a decision by editing the document body. Confirming or changing a decision goes through `obsidian-log decide`. |
+| **No direct body append** | Never append a decision by editing the document body. Confirming or changing a decision goes through `ledger decide`. |
 | **Decision log is append-only** | Never edit an existing decision's body in `## 결정 로그`. Only the status may flip (`ACTIVE` → `SUPERSEDED by D-n`). |
 | **Supersede, don't overwrite** | A changed decision is recorded with `decide --supersedes D-n`, which atomically replaces the topic block. |
 | **Current section = confirmed only** | No TBD, no "고민 중", no unchosen options. Unconfirmed discussion belongs in `## 진행 로그` or stays in the session. Promote to the current section only at the moment it is decided. |
@@ -35,7 +35,7 @@ which moves — never deletes — such content back to the log.
 
 ## Reading Protocol
 
-- **Never read the design document in full.** Use `obsidian-log current --file <task> [--topic <slug>]`.
+- **Never read the design document in full.** Use `ledger current --file <task> [--topic <slug>]`.
 - **When delegating, inject the `current` output into the prompt** — never hand a subagent a document path.
 
 This is what keeps token cost independent of document length. A subagent that reads the whole document

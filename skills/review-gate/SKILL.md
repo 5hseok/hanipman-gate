@@ -26,7 +26,7 @@ It never edits source files itself, never stages, never commits. It verifies, op
 
 - `slice-id` — e.g. `S-2`. If omitted, infer from the ledger's 작업 큐 (last slice whose target files intersect the current diff). If still ambiguous, ask the user.
 - `--no-fix` — report only. Never delegate fixes, never re-run. Verdict is emitted as-is.
-- `--task <task-file>` — the Obsidian ledger task document. Resolution order below.
+- `--task <task-file>` — the ledger task document. Resolution order below.
 
 ### Resolving the ledger task document
 
@@ -34,10 +34,10 @@ It never edits source files itself, never stages, never commits. It verifies, op
 2. `.claude/review/{branch-slug}/context.json` → `.task_file` (written by `/impl-pipeline`).
 3. Search the vault by branch keyword:
    ```bash
-   VAULT="${OBSIDIAN_VAULT:?원장 위치를 지정하십시오 — 아직 어댑터 이전 형태입니다}"
+   LEDGER="${CLAUDE_PLUGIN_ROOT}/scripts/ledger/ledger"
    BRANCH=$(git branch --show-current)
    KEYWORD="${BRANCH##*/}"
-   ls "$VAULT/tasks/"*/ | grep -i "$KEYWORD"
+   "$LEDGER" resolve "$KEYWORD"
    ```
 4. Still not found → ask the user. Do **not** guess.
 
@@ -69,8 +69,7 @@ Invoked standalone (no `context.json`), derive the two fields this skill actuall
 ### 0b. Repo basics
 
 ```bash
-VAULT="${OBSIDIAN_VAULT:?원장 위치를 지정하십시오 — 아직 어댑터 이전 형태입니다}"
-LOG="$VAULT/.claude/scripts/obsidian-log.py"
+LEDGER="${CLAUDE_PLUGIN_ROOT}/scripts/ledger/ledger"
 BRANCH=$(git branch --show-current)
 SLUG=$(echo "$BRANCH" | tr '/' '-')
 HEAD_SHA=$(git rev-parse --short HEAD)
@@ -98,12 +97,12 @@ Never edit the project's `.gitignore` yourself.
 
 ```bash
 # Decisions owned by this slice + the 작업 큐 (target-file globs, acceptance criteria)
-python3 "$LOG" current --file "$TASK" --with-queue
+"$LEDGER" current --file "$TASK" --with-queue
 # Narrow to one topic when a slice maps to a single topic slug
-python3 "$LOG" current --file "$TASK" --topic <topic-slug>
+"$LEDGER" current --file "$TASK" --topic <topic-slug>
 ```
 
-**Fallback** — if `current` is unavailable (`invalid choice: 'current'`), the ledger CLI has not shipped that subcommand yet. Then:
+**Fallback** — if the ledger CLI is unavailable or returns non-zero:
 - `Read` only the `## 현재 설계` and `## 작업 큐` sections of the task file (use `Grep -n` to find the section line ranges first, then `Read` with `offset`/`limit`).
 - Mark checks 3 and 4 as `SKIPPED (ledger CLI unavailable — 설계 정합/설계 밖 변경 미검증)` if even that fails, and continue. Checks 1 and 2 must still run.
 
@@ -203,7 +202,7 @@ Delegate this comparison to a subagent (it is a reading task, and it keeps the g
 Agent(subagent_type="general-purpose", description="Design conformance check", prompt="""
 TASK: Compare a design ledger's decisions against an actual git diff and classify every gap.
 
-INPUT 1 — 담당 결정 (obsidian-log current --topic 출력):
+INPUT 1 — 담당 결정 (ledger current --topic 출력):
 {paste current --topic output}
 
 INPUT 2 — 슬라이스 acceptance 기준 (작업 큐에서 해당 슬라이스):
@@ -296,12 +295,12 @@ With `--no-fix`, skip all of the above — emit the RED verdict and the item lis
 If Check 3 or Check 4 found anything, append **one line per deviation to 진행 로그** — never to the 결정 로그. Writing pendings into the decision ledger pollutes it, and the subagent's judgment is not authoritative enough to be a decision.
 
 ```bash
-python3 "$LOG" task-log --file "$TASK" --type 검수 \
+"$LEDGER" task-log --file "$TASK" --type 검수 \
   --summary "S-2 게이트: 설계 이탈 2건 (사용자 판단 대기)" \
   --log "[DEVIATION] 설계에 없던 추가: PointService._validate_balance() — D-2 미반영"
 ```
 
-**The skill stops there.** Only after the user rules "설계 갱신" does the *lead* call `obsidian-log decide` to promote it into the ledger. The gate never calls `decide`.
+**The skill stops there.** Only after the user rules "설계 갱신" does the *lead* call `ledger decide` to promote it into the ledger. The gate never calls `decide`.
 
 ---
 
@@ -411,7 +410,7 @@ Every step degrades instead of aborting. The gate's job is to *reduce* review lo
 | Project has no convention docs | `convention: SKIPPED (no convention docs)`. **Not RED.** Continue. |
 | `/convention-audit` errors or writes no report | `convention: SKIPPED (사유)`. Continue. **Never** hand-roll a replacement check. |
 | Base branch undeterminable | Ask the user. Never silently default to `main`. |
-| `obsidian-log current` unavailable | Read the `## 현재 설계` / `## 작업 큐` sections directly (Grep for line range → Read with offset). If that fails too: checks 3, 4 → `SKIPPED`. |
+| `ledger current` unavailable | Read the `## 현재 설계` / `## 작업 큐` sections directly (Grep for line range → Read with offset). If that fails too: checks 3, 4 → `SKIPPED`. |
 | Slice's target-file glob missing from the 작업 큐 | Check 4 → `SKIPPED (글롭 미정의)`. Check 3 still runs. |
 | Fix subagent fails twice | Stop. Report. Never a 3rd attempt. |
 
@@ -424,7 +423,7 @@ Whenever a check is `SKIPPED`, the stdout summary **must** carry the line:
 
 - **Never** add a code comment, or instruct a subagent to. Explanation lives in the sidecar guide, not the source.
 - **Never** `git add`, `git commit`, `git stash`. Commit is the user's call, always.
-- **Never** call `obsidian-log decide`. Deviations go to 진행 로그 only.
+- **Never** call `ledger decide`. Deviations go to 진행 로그 only.
 - **Never** rewrite convention checking — `/convention-audit` owns it.
 - **Never** leave `convention-audit-report.md` at the repo root — move it into `.claude/review/{slug}/`.
 - **Never** edit the project's `.gitignore`. Warn instead.

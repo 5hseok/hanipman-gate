@@ -108,17 +108,32 @@ AI가 코드를 쓰기 시작하면서 병목이 옮겨갔다. 생성은 빨라�
 
 ---
 
+## 원장은 어디에 두든 된다
+
+스킬은 원장이 어디 있는지 모른다. `ledger` 하나만 부른다.
+
+```bash
+ledger current --file <task> --topic <slug>   # 확정된 결정만. 문서 전체를 읽지 않는다
+ledger decide  --file <task> --topic <slug> --title ... --supersedes D-3
+ledger doctor                                  # 어느 백엔드가 왜 골라졌는지
+```
+
+기본은 레포 안 markdown(`.claude/design/`)이다. Obsidian 볼트를 쓰고 있으면
+`~/.claude/ledger.json` 에 경로만 적으면 기존 문서를 그대로 쓴다.
+
+```json
+{ "backend": "obsidian", "root": "/path/to/vault" }
+```
+
+자세한 건 [docs/adapter-contract.md](docs/adapter-contract.md).
+
 ## 아직인 것
 
 작업 중인 레포다. 지금은 다음이 미완이다.
 
-- 원장 어댑터 (`scripts/ledger/`) — 결정 원장을 Obsidian 또는 레포 내 markdown 어느 쪽에도 쓸 수 있게 하는 층
 - 트랙 엔진 이관 (`scripts/track/`)
 - Artifact 보드 — 로컬 서버 없이 보는 트랙 보드
 - 예시 문서 (`examples/`)
-
-스킬 본문의 원장 호출은 아직 어댑터 이전 형태다. `OBSIDIAN_VAULT` 를 요구하는 자리가 남아 있고,
-어댑터가 들어오면 백엔드에 관계없이 `ledger` 한 명령으로 바뀐다.
 
 ---
 

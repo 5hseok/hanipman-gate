@@ -1,7 +1,7 @@
 ---
 name: design-reconcile
 description: |
-  Hygiene check on an Obsidian design document's decision ledger.
+  Hygiene check on a design document's decision ledger.
   Detects status inconsistencies, leftover superseded decisions, and unconfirmed
   discussion that leaked into the current-design section. Proposes moves (never deletions)
   and requires user approval. Delegated to a Haiku subagent.
@@ -55,10 +55,10 @@ The task document has four sections. This skill reasons about the first three.
 
 | Section | Content | Managed by |
 |---|---|---|
-| `## 현재 설계` | Confirmed decisions only, inside `<!-- CURRENT:START/END -->`. Blocks: `### D-n · {topic-slug} · {title}` | `obsidian-log decide` (atomic replace) |
+| `## 현재 설계` | Confirmed decisions only, inside `<!-- CURRENT:START/END -->`. Blocks: `### D-n · {topic-slug} · {title}` | `ledger decide` (atomic replace) |
 | `## 작업 큐` | Implementation slices | `/impl-pipeline` |
-| `## 결정 로그` | Append-only. Each entry: `ACTIVE` or `SUPERSEDED by D-n` | `obsidian-log decide` |
-| `## 진행 로그` | Progress notes | `obsidian-log task-log` / `task-status` |
+| `## 결정 로그` | Append-only. Each entry: `ACTIVE` or `SUPERSEDED by D-n` | `ledger decide` |
+| `## 진행 로그` | Progress notes | `ledger task-log` / `task-status` |
 
 ---
 
@@ -96,7 +96,7 @@ These are guards. State them explicitly in the delegation prompt.
 - **Never rewrite an existing decision-log body.** Log entries are append-only; only the
   `ACTIVE` / `SUPERSEDED by D-n` status may flip.
 - **Present a diff and get approval before any edit.** Every change, without exception.
-- **Report CLI bypass.** `obsidian-log decide` performs an atomic topic-block replacement.
+- **Report CLI bypass.** `ledger decide` performs an atomic topic-block replacement.
   Therefore leftover superseded content in the current section is evidence that **someone edited the
   document body directly instead of using the CLI**. Report that fact to the user explicitly —
   it is a process problem, not just a text problem.
@@ -108,11 +108,11 @@ These are guards. State them explicitly in the delegation prompt.
 ### Step 1 — Read the ledger
 
 ```bash
-VAULT="${OBSIDIAN_VAULT:?원장 위치를 지정하십시오 — 아직 어댑터 이전 형태입니다}"
-LOG="$VAULT/.claude/scripts/obsidian-log.py"
+LEDGER="${CLAUDE_PLUGIN_ROOT}/scripts/ledger/ledger"
 
-python3 "$LOG" current --file <task> --ids-only    # active decision IDs
-python3 "$LOG" current --file <task>               # active decision bodies
+"$LEDGER" current --file <task> --ids-only    # active decision IDs
+"$LEDGER" current --file <task>               # active decision bodies
+"$LEDGER" raw-path --file <task>              # 원문을 읽어야 할 때만
 ```
 
 Unlike `/impl-pipeline`, this skill **may** read the raw document — inconsistency detection requires
@@ -147,7 +147,7 @@ Reject → stop, change nothing.
 Delegate the approved moves to a Haiku subagent.
 
 - Status flips (`ACTIVE` → `SUPERSEDED by D-n`) and decision replacement go through
-  `obsidian-log decide` where possible — never by hand-editing the current section.
+  `ledger decide` where possible — never by hand-editing the current section.
 - Content moves that the CLI does not cover are applied with `Edit`, moving text to its
   destination section. Cut-and-paste, not delete.
 - **MUST NOT**: delete content, reword decisions, touch `## 작업 큐`, or edit anything the user
@@ -156,4 +156,4 @@ Delegate the approved moves to a Haiku subagent.
 ### Step 6 — Report
 
 List what moved and where. If a CLI bypass was detected, restate it — future edits must go through
-`obsidian-log decide`.
+`ledger decide`.

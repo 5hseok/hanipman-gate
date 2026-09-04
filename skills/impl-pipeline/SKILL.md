@@ -2,7 +2,7 @@
 name: impl-pipeline
 description: |
   Orchestrate design → implementation → review as small, gated slices.
-  Loads confirmed decisions from the Obsidian decision ledger (never reads the whole doc),
+  Loads confirmed decisions from the decision ledger (never reads the whole doc),
   splits work into review-sized slices, delegates each slice, runs the machine gate,
   and hands the user a small diff plus a walkthrough for human review.
   Works in any repository — project-specific facts (layers, conventions, base branch) are
@@ -49,7 +49,7 @@ It does **propose** checkpoint commits at slice boundaries — see Core Principl
 
 | Argument | Meaning |
 |---|---|
-| `task-file` | Obsidian task document (path or filename fragment). If omitted, find the most recent task doc and confirm with the user. |
+| `task-file` | Ledger task document (path or filename fragment). If omitted, find the most recent task doc and confirm with the user. |
 | `--slices N` | Hint for target slice count. Advisory only — the decomposition axis wins. |
 | `--resume S-n` | Skip to slice `S-n` (already-approved slices are not re-implemented). |
 | `--explain` | Generate the interactive HTML understanding aid (`/explain-diff-html`) for every slice at Step 6 without asking. Off by default — otherwise it is offered per slice. |
@@ -67,7 +67,7 @@ Read these before Step 0. They override convenience at every step.
   *propose* a commit (purpose-based phase split + why) and wait. Never `git add` / `git commit` before
   the user approves — but never let the uncommitted diff silently grow past review size either.
   Full trigger list in the `design-workflow` skill § Checkpoint Commits.
-- **Never read the design document in full.** Use `obsidian-log current` only. When delegating,
+- **Never read the design document in full.** Use `ledger current` only. When delegating,
   inject the `current` output into the prompt — never pass a document path and let the subagent read it.
   This is what makes token cost independent of document length.
 - **Complexity gate — Simple work bypasses the pipeline.** If the change touches ≤2 files or maps
@@ -201,14 +201,13 @@ git check-ignore -q .claude/review && echo IGNORED || echo TRACKED
 `TRACKED` → warn the user once: *"`.claude/review/`가 gitignore되지 않는다. 산출물이 커밋에 섞일 수 있으니
 .gitignore에 추가하거나, 커밋 전에 직접 제외하라."* Do not edit their `.gitignore` yourself.
 
-### 0g. 진행 대시보드에 리뷰 폴더 등록 (선택 — Obsidian 결정 원장을 쓰는 경우)
+### 0g. 리뷰 폴더 경로를 원장에 기록 (선택)
 
-이 task가 Obsidian 결정 원장 기반이면, 리뷰 산출물 폴더의 **절대경로**를 task 문서에 한 번 기록한다.
-그러면 전역 진행 대시보드(`obsidian-log progress`)가 각 슬라이스의 워크스루/explain-diff를 `file://`로
-잇는다 (실패해도 무시 — aid이지 gate 아님):
+리뷰 산출물 폴더의 **절대경로**를 원장 문서에 한 번 적어둔다. 원장 백엔드가 대시보드를 렌더하는
+경우 각 슬라이스의 워크스루를 거기서 이어준다 (실패해도 무시 — aid이지 gate 아님):
 
 ```bash
-python3 "$LOG" review-link --file <task> --dir "$ROOT/.claude/review/$SLUG"
+"$LEDGER" review-link --file <task> --dir "$ROOT/.claude/review/$SLUG"
 ```
 
 ---
@@ -218,19 +217,18 @@ python3 "$LOG" review-link --file <task> --dir "$ROOT/.claude/review/$SLUG"
 Do **not** open the task document. Read only the ledger, via CLI:
 
 ```bash
-VAULT="${OBSIDIAN_VAULT:?원장 위치를 지정하십시오 — 아직 어댑터 이전 형태입니다}"
-LOG="$VAULT/.claude/scripts/obsidian-log.py"
+LEDGER="${CLAUDE_PLUGIN_ROOT}/scripts/ledger/ledger"
 
-python3 "$LOG" current --file <task> --ids-only     # which decisions exist
-python3 "$LOG" current --file <task>                # body of the active decisions
+"$LEDGER" current --file <task> --ids-only     # which decisions exist
+"$LEDGER" current --file <task>                # body of the active decisions
 ```
 
 - If `task-file` was not given, locate recent task docs and ask the user which one:
   ```bash
-  ls "$VAULT/tasks/$(date +%Y-%m)/"
+  "$LEDGER" ls
   ```
 - If `current` returns nothing, the design is not confirmed yet. **Stop** and tell the user to confirm
-  decisions first (`obsidian-log decide`). Do not invent decisions from the document body.
+  decisions first (`ledger decide`). Do not invent decisions from the document body.
 - If the `current` subcommand is unavailable, report it and stop — do not fall back to reading the whole
   document, that defeats the purpose of the skill.
 
@@ -292,10 +290,9 @@ Block format:
   - ...
 ```
 
-`- status:` 필드는 진행 대시보드(`obsidian-log progress`)가 슬라이스 진척을 계산하는 단일 진실원이다
+`- status:` 필드가 슬라이스 진척의 단일 진실원이다
 (enum: 대기·구현중·게이트·검수대기·승인·커밋·보류). 최초 분해 시 전부 `대기`로 쓰고, 이후 전이는
-본문을 직접 고치지 말고 **CLI로** 바꾼다 — `obsidian-log slice-status --file <task> --slice N --status <상태>`.
-CLI가 대시보드를 자동 재생성한다.
+본문을 직접 고치지 말고 **CLI로** 바꾼다 — `ledger slice-status --file <task> --slice N --status <상태>`.
 
 Then present the plan to the user with `AskUserQuestion` — "splitting into N slices like this, OK?".
 Options should include approving as-is, merging slices, or splitting further.
@@ -310,7 +307,7 @@ Delegate to an implementation-capable subagent — `impl-executor` if available,
 The delegation prompt **must inline the decision text**, obtained with:
 
 ```bash
-python3 "$LOG" current --file <task> --topic <slug>
+"$LEDGER" current --file <task> --topic <slug>
 ```
 
 Required elements of the delegation prompt:
@@ -418,17 +415,17 @@ Then **wait**. Branch on the user's response:
 
 | User says | Action |
 |---|---|
-| **Approve** | `obsidian-log slice-status --file <task> --slice n --status 승인` (커밋까지 하면 `커밋`), then move to the next slice (Step 3). |
-| **Change the design** ("let's go with B") | Lead updates the ledger: `obsidian-log decide --supersedes D-n`. Then re-implement this slice. |
+| **Approve** | `ledger slice-status --file <task> --slice n --status 승인` (커밋까지 하면 `커밋`), then move to the next slice (Step 3). |
+| **Change the design** ("let's go with B") | Lead updates the ledger: `ledger decide --supersedes D-n`. Then re-implement this slice. |
 | **Fix the implementation** ("fix this bit") | Delegate the fix → back to Step 4. |
-| **Accept the deviation** ("that addition was intended") | Lead records it with `obsidian-log decide` — the design catches up to the code. Then approve. |
-| **Put it on hold** ("이건 나중에") | `obsidian-log slice-status --file <task> --slice n --status 보류` — parked, and the dashboard shows it separately from remaining work. |
+| **Accept the deviation** ("that addition was intended") | Lead records it with `ledger decide` — the design catches up to the code. Then approve. |
+| **Put it on hold** ("이건 나중에") | `ledger slice-status --file <task> --slice n --status 보류` — parked, and the dashboard shows it separately from remaining work. |
 | **Need to understand it first** ("이해가 안 된다") | Generate `/explain-diff-html S-{n}`, then return here. |
 
-**슬라이스 상태 전이 (Obsidian 원장 기반일 때, `status:` 필드 = 대시보드 단일 진실원, D-5/D-7)**:
+**슬라이스 상태 전이 (`status:` 필드가 단일 진실원)**:
 Step 3 위임 시작 → `구현중`, Step 4 GREEN → `검수대기`, Step 6 승인 → `승인`(커밋 시 `커밋`), 보류 → `보류`.
-전이는 전부 `obsidian-log slice-status`로 — 본문 직접 편집 금지. CLI가 진행 대시보드를 자동 재생성한다.
-프로젝트가 Obsidian 원장을 안 쓰면 이 단계는 조용히 건너뛴다(SKIPPED).
+전이는 전부 `ledger slice-status`로 — 본문 직접 편집 금지.
+원장이 없는 프로젝트면 이 단계는 조용히 건너뛴다(SKIPPED).
 
 ### Pipelining (opt-in)
 
@@ -447,7 +444,7 @@ After every slice is approved:
   (Slices the user already checkpoint-committed are done — do not restage them.)
 - Update the task document status:
   ```bash
-  python3 "$LOG" task-status --file <task> --status 구현완료 --log "S-1~S-n 구현·검수 완료"
+  "$LEDGER" task-status --file <task> --status 구현완료 --log "S-1~S-n 구현·검수 완료"
   ```
 - If implementation revealed design gaps that the user accepted, make sure they were promoted with
   `decide` (Step 6) — the ledger must reflect the shipped code.

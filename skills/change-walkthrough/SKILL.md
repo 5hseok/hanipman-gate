@@ -24,7 +24,7 @@ The answer does **not** go into code comments (comments state *why* in one line;
 |---|---|---|
 | **When** | The code was written *by* `/impl-pipeline`, slice by slice. | The code was **already written** before the pipeline existed — one bulk implementation, often in a worktree. |
 | **Input: what to review** | Slice target globs from the 작업 큐. | The whole working-tree diff vs the base branch. |
-| **Input: why it exists** | The decision ledger (`D-n`), via `obsidian-log current`. | A design document (legacy PRD / task doc), cited **by section**. |
+| **Input: why it exists** | The decision ledger (`D-n`), via `ledger current`. | A design document (legacy PRD / task doc), cited **by section**. |
 | **Input: machine verdict** | `/review-gate` JSON — required. | Usually absent → badges render `미검증`. |
 | **Chapters** | One per slice; the slice *is* the unit. | **The skill derives them** — the diff is split by entrypoint-reachable flow. |
 | **Headline output** | 판단 필요 N건 (what the gate could not certify). | **미구현 / 설계와 다른 구현 / 설계에 없던 추가** — the design-conformance triage. |
@@ -68,8 +68,7 @@ Everything else is **shared**: request-flow ordering, graph-derived call chains,
 ## Step 1 — Gather inputs
 
 ```bash
-VAULT="${OBSIDIAN_VAULT:?원장 위치를 지정하십시오 — 아직 어댑터 이전 형태입니다}"
-LOG="$VAULT/.claude/scripts/obsidian-log.py"
+LEDGER="${CLAUDE_PLUGIN_ROOT}/scripts/ledger/ledger"
 SLUG=$(git branch --show-current | tr '/' '-')
 HEAD_SHA=$(git rev-parse --short HEAD)
 
@@ -77,7 +76,7 @@ HEAD_SHA=$(git rev-parse --short HEAD)
 cat ".claude/review/$SLUG/S-2-gate.json"
 
 # 2. Decisions this slice owns (never Read the whole task doc)
-python3 "$LOG" current --file "$TASK" --topic <topic-slug>
+"$LEDGER" current --file "$TASK" --topic <topic-slug>
 
 # 3. The diff, and the per-file blob hashes for the staleness stamp
 #    $BASE comes from the gate JSON's .base_branch (or context.json). Never hardcode it.
@@ -240,7 +239,7 @@ TASK: Write a Korean-language review guide (검수 가이드) markdown file for 
 INPUT 1 — 게이트 결과 JSON:
 {contents of .claude/review/{slug}/S-2-gate.json}
 
-INPUT 2 — 담당 결정 (obsidian-log current --topic 출력):
+INPUT 2 — 담당 결정 (ledger current --topic 출력):
 {output}
 
 INPUT 3 — diff:
@@ -391,10 +390,10 @@ sections** become the citation target.
 1. `--design` args, if given (repeatable).
 2. Otherwise search the vault by branch keyword and **present the candidates**:
    ```bash
-   VAULT="${OBSIDIAN_VAULT:?원장 위치를 지정하십시오 — 아직 어댑터 이전 형태입니다}"
+   LEDGER="${CLAUDE_PLUGIN_ROOT}/scripts/ledger/ledger"
    KEYWORD="${BRANCH##*/}"                       # feature/app-api/chat-auto-tagging → chat-auto-tagging
-   ls "$VAULT/tasks/"*/ | grep -i "${KEYWORD%%-*}"
-   grep -ril "$KEYWORD" "$VAULT/tasks/" 2>/dev/null | head
+   "$LEDGER" resolve "${KEYWORD%%-*}"
+   "$LEDGER" ls
    ```
    Show the hits, ask the user to confirm. **Never silently pick one.** A wrong design doc produces a
    confidently wrong conformance triage, which is worse than no triage.
@@ -405,7 +404,7 @@ sections** become the citation target.
 rule does not apply — a legacy PRD has no ledger CLI to query, so it must be read. But:
 
 - If the doc **is** a ledger doc (has a `## 현재 설계` section), prefer
-  `python3 "$LOG" current --file <doc>` and read only that — cheaper and already deduplicated.
+  `"$LEDGER" current --file <doc>` and read only that — cheaper and already deduplicated.
 - If it is a legacy PRD, read it **once**, and immediately reduce it to a **design-item table** — that
   table, not the raw document, is what gets injected into subagents:
 
@@ -876,7 +875,7 @@ In **retrofit** mode there is no 작업 큐 to enumerate, so `--all` does not ap
 | **Retrofit: worktree path not in `list_projects`** | **Expected — not a failure.** Worktrees are not indexed separately. Resolve via `rev-parse --git-common-dir` → the main repo, and match *that* (§ R3). Only if the **main repo** is absent from `list_projects` do you drop to degraded mode. |
 | `detect_changes` / `trace_path` fails on an indexed project | Same degraded rendering: `⚠️ 호출 체인 추출 실패 — 이 가이드에는 영향 범위가 없다. 회귀 위험을 직접 확인하라.` **Do not substitute grep.** A wrong call chain is worse than none. |
 | `context.json.layers` absent | Derive the flow order from the call chain. If degraded too, fall back to diff order and say so. |
-| `obsidian-log current` unavailable | Render the 왜 fields as `근거 미확인` rather than guessing a decision id. |
+| `ledger current` unavailable | Render the 왜 fields as `근거 미확인` rather than guessing a decision id. |
 | Symbol not found in the graph (brand-new file, index stale) | **Slice mode:** re-run `detect_changes` once; if still absent, mark `호출 체인: 신규 심볼 — 인덱스 미반영`. **Retrofit mode:** this is the *expected* state for every new symbol — read the chain from the diff and mark it `신규 심볼 — 그래프 없음, diff에서 도출` (§ R3). |
 | **Retrofit: base branch moved ahead of the fork point** | **The normal case for old branches — not a failure.** Diff against `git merge-base $BASE HEAD`, never `$BASE` (§ R1). If you ever see files in the diff that the implementer plainly never touched, this is why: you diffed the base *tip*. |
 | **Retrofit: no design doc found / user cannot name one** | Guide is still produced. Replace the triage section with `⚠️ 설계 문서 없음 — 설계 정합 판정 불가.` and render every 왜 field as `근거 미확인`. Degraded ≠ failed. |

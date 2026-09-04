@@ -42,13 +42,15 @@ class Backend:
             for fn in files:
                 if fn == base:
                     return os.path.join(root, fn)
+        low = stem.lower()
         for root, _dirs, files in os.walk(self.tasks):
             for fn in sorted(files):
-                if fn.startswith(stem):
+                if fn.lower().startswith(low):
                     return os.path.join(root, fn)
+        # 브랜치 키워드로 찾는 경우가 많다. 대소문자를 가리지 않는다.
         for root, _dirs, files in os.walk(self.tasks):
             for fn in sorted(files):
-                if stem in fn:
+                if low in fn.lower():
                     return os.path.join(root, fn)
         return None
 

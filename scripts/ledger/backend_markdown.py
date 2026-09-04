@@ -40,10 +40,12 @@ class Backend:
         exact = [p for p in self._walk() if os.path.basename(p) == base]
         if exact:
             return exact[0]
-        pref = [p for p in self._walk() if os.path.basename(p).startswith(stem)]
+        low = stem.lower()
+        pref = [p for p in self._walk() if os.path.basename(p).lower().startswith(low)]
         if pref:
             return pref[0]
-        part = [p for p in self._walk() if stem in os.path.basename(p)]
+        # 브랜치 키워드로 찾는 경우가 많다. 대소문자를 가리지 않는다.
+        part = [p for p in self._walk() if low in os.path.basename(p).lower()]
         return part[0] if part else None
 
     def _need(self, ref):

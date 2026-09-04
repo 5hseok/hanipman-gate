@@ -2,7 +2,7 @@
 name: explain-design-html
 description: |
   Use when the user needs to review or internalize a DESIGN before any code exists — a design proposal,
-  an architecture, an Obsidian decision ledger, or a set of technical decisions — to cut the cognitive
+  an architecture, a decision ledger, or a set of technical decisions — to cut the cognitive
   debt and review time of judging "why this direction, which alternative was dropped, what could break".
   Produces a single self-contained interactive HTML file in Korean
   (문제 정의 → 설계 직관 → 결정·대안 비교 → 영향 범위·리스크 → 설계 Playground → 이해도 검증 퀴즈 5문항).
@@ -35,17 +35,16 @@ disable-model-invocation: false
 
 | 인자 형태 | 수집 방법 |
 |---|---|
-| 생략 / task 문서명 | Obsidian 결정 원장에서 확정 결정만 로드 (아래 CLI). task-file 미지정 시 최근 문서 후보를 사용자에게 확인 |
+| 생략 / task 문서명 | 결정 원장에서 확정 결정만 로드 (아래 CLI). task-file 미지정 시 최근 문서 후보를 사용자에게 확인 |
 | 설계 문서 경로 (`.md` 등) | 해당 파일을 Read. 결정 원장 구조(`## 현재 설계`)면 CLI 우선 |
 | 자유 텍스트 설계 설명 | 대화 맥락의 설계 서술을 그대로 분석 대상으로 |
 
 ```bash
-VAULT="${OBSIDIAN_VAULT:?원장 위치를 지정하십시오 — 아직 어댑터 이전 형태입니다}"
-LOG="$VAULT/.claude/scripts/obsidian-log.py"
+LEDGER="${CLAUDE_PLUGIN_ROOT}/scripts/ledger/ledger"
 
-python3 "$LOG" current --file <task> --ids-only     # 어떤 결정(D-n)이 있는지
-python3 "$LOG" current --file <task>                # 확정 결정 본문
-ls "$VAULT/tasks/$(date +%Y-%m)/"                   # task-file 미지정 시 후보 나열
+"$LEDGER" current --file <task> --ids-only     # 어떤 결정(D-n)이 있는지
+"$LEDGER" current --file <task>                # 확정 결정 본문
+"$LEDGER" ls                                   # task-file 미지정 시 후보 나열
 ```
 
 `current`가 비어 있으면 아직 확정된 설계가 없는 것입니다. 그럴 때는 진행 로그/제안 내용을 대상으로 분석하되, **"아직 미확정 설계"임을 HTML 상단에 명시**하십시오. 전체 문서를 통째로 읽어 우회하지 마십시오.
@@ -160,7 +159,7 @@ diff 단계의 진단 질문이 "이 줄을 바꾸면 무엇이 깨지는가"라
 
 ### 설계 전용 규칙
 
-- **확정된 것만 그립니다.** 결정 원장(`obsidian-log current`)의 `## 현재 설계`에 있는 것만
+- **확정된 것만 그립니다.** 결정 원장(`ledger current`)의 `## 현재 설계`에 있는 것만
   다이어그램에 넣으십시오. 미확정 대안을 그리면 그림이 결정을 앞질러 버립니다.
   대안 비교는 3번 섹션의 표로 하고, 다이어그램은 채택안 한 장입니다.
 - `current`가 비어 있어 상단에 **미확정** 표기를 달았다면, 다이어그램 캡션에도 같은 표기를 유지합니다.
@@ -181,9 +180,9 @@ diff 단계의 진단 질문이 "이 줄을 바꾸면 무엇이 깨지는가"라
 이 스킬은 **구현 전 설계 리뷰** 단계에 놓입니다. 흐름:
 
 ```
-설계 논의 → (explain-design-html: 설계 이해·검토) → obsidian-log decide 로 확정 → /impl-pipeline 구현 → (explain-diff-html: 변경 이해)
+설계 논의 → (explain-design-html: 설계 이해·검토) → ledger decide 로 확정 → /impl-pipeline 구현 → (explain-diff-html: 변경 이해)
 ```
 
-- 확정 전(`obsidian-log decide` 이전)에 결정 근거·대안·리스크를 리뷰어에게 한 번에 각인시켜, **확정 판단의 병목을 줄이는 것**이 이 스킬의 존재 이유입니다.
+- 확정 전(`ledger decide` 이전)에 결정 근거·대안·리스크를 리뷰어에게 한 번에 각인시켜, **확정 판단의 병목을 줄이는 것**이 이 스킬의 존재 이유입니다.
 - 이미 확정된 설계라도, 구현에 들어가기 전 팀·본인의 이해도를 맞추는 용도로 재사용할 수 있습니다.
 - 산출물은 **판단을 돕는 aid이지 gate가 아닙니다.** 생성에 실패해도 원문(결정 원장)으로 리뷰는 그대로 진행합니다.
