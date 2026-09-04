@@ -1,0 +1,85 @@
+{
+  "name": "hanipman-gate",
+  "description": "AI가 쏟아낸 diff를 통째로 받지 않는다. 설계를 결정 원장에 확정하고, 한입 크기 슬라이스로 잘라, 게이트를 통과한 것만 사람 앞에 놓는다.",
+  "owner": {
+    "name": "5hseok",
+    "url": "https://github.com/5hseok"
+  },
+  "plugins": [
+    {
+      "name": "design-pipeline",
+      "source": ".",
+      "description": "설계를 결정 원장에 확정하고, 리뷰 크기 슬라이스로 잘라, 게이트를 통과한 diff만 사람에게 보낸다.",
+      "version": "0.1.0",
+      "author": {
+        "name": "5hseok"
+      },
+      "repository": "https://github.com/5hseok/hanipman-gate",
+      "category": "productivity",
+      "keywords": [
+        "code-review",
+        "design-doc",
+        "decision-ledger",
+        "slices",
+        "review-gate"
+      ],
+      "skills": [
+        "./skills/design-workflow",
+        "./skills/impl-pipeline",
+        "./skills/review-gate",
+        "./skills/change-walkthrough",
+        "./skills/design-reconcile",
+        "./skills/convention-audit"
+      ],
+      "agents": [
+        "./agents/impl-executor.md"
+      ]
+    },
+    {
+      "name": "track-ledger",
+      "source": ".",
+      "description": "여러 레포·여러 세션에 걸친 작업 순서를 기억이 아니라 읽기 전용 프로브로 들고 있는다. 상태는 손으로 쓸 수 없다.",
+      "version": "0.1.0",
+      "author": {
+        "name": "5hseok"
+      },
+      "repository": "https://github.com/5hseok/hanipman-gate",
+      "category": "productivity",
+      "keywords": [
+        "multi-repo",
+        "release-order",
+        "gate",
+        "probe",
+        "parallel-sessions"
+      ],
+      "skills": [
+        "./skills/track-ledger",
+        "./skills/track-ledger-policy"
+      ],
+      "agents": []
+    },
+    {
+      "name": "explain-aids",
+      "source": ".",
+      "description": "설계와 diff를 이해시키는 인터랙티브 HTML 자료를 만든다. 검수를 막지 않는 보조 레이어.",
+      "version": "0.1.0",
+      "author": {
+        "name": "5hseok"
+      },
+      "repository": "https://github.com/5hseok/hanipman-gate",
+      "category": "productivity",
+      "keywords": [
+        "explain",
+        "onboarding",
+        "diff",
+        "design-review"
+      ],
+      "skills": [
+        "./skills/explain-skills-workflow",
+        "./skills/explain-design-html",
+        "./skills/explain-diff-html"
+      ],
+      "agents": []
+    }
+  ]
+}
