@@ -80,7 +80,7 @@ track verify            프로브 일괄 실측 (상태의 유일한 작성자) 
 track probes --audit    프로브가 거짓 양성을 낼 수 있나      track impact   팀에 요청할 것만
 track join --session X --steps T-2   자기 등록 + 브리프    track brief    그 세션이 알 것만
 track signal --step T-2 --kind merged --evidence <해시>   track conflicts 교차 원장 점검
-track serve             실시간 UI (localhost:4747)
+track serve             실시간 UI (기본 127.0.0.1:4747)
 ```
 
 절차·스키마 상세는 `/track-ledger` 스킬에 있다. 트랙을 처음 만들 때 그 스킬을 부른다.

@@ -108,6 +108,7 @@ track verify            # 실측 (상태의 유일한 작성자)
 track next              # 지금 할 것 한 줄
 track impact            # 팀에 요청할 것만
 track serve             # 실시간 UI — 환경 레인 × 게이트 체인 · 결정 레인 · 세션 그래프
+                        #   기본은 루프백. 다른 기기에서 보려면 --host 0.0.0.0
 ```
 
 각 세션에는 **문서 경로가 아니라 브리프를 넘긴다**:
@@ -132,13 +133,17 @@ track verify --step T-4          # 실제로 그런지는 프로브가 판정한
 | 로컬 `git` 로 원격 상태를 잰다 | 다른 세션의 fetch 로 판정이 뒤집힌다 |
 | 트랙을 새로 판다 | Step 0 을 건너뛴 것. 보드가 두 장이 된다 |
 
-## 파일 위치
+## 실행과 파일 위치
+
+CLI 는 플러그인 안에 있다. `${CLAUDE_PLUGIN_ROOT}/scripts/track/track` 이 진입점이고,
+자주 쓰면 그 경로를 `PATH` 에 두거나 별칭을 걸어라. 아래 문서에서는 `track` 으로 줄여 쓴다.
 
 ```
-<ledger-root>/tracks/YYYY-MM/MMDD-track-<slug>.md   트랙 문서 (사람이 쓴다)
-~/.claude/track-cache/<track-id>.json               실측 캐시 (프로브가 쓴다)
-<plugin>/scripts/track/                             CLI·서버·UI
-track                                               진입점 (PATH 에 두거나 플러그인 경로로 호출)
-
-<ledger-root> 는 원장 백엔드가 정한다. 기본은 레포 안 `.claude/`, Obsidian 백엔드면 볼트 루트.
+<root>/tracks/YYYY-MM/MMDD-track-<slug>.md    트랙 문서 (사람이 쓴다)
+~/.claude/track-cache/<track-id>.json         실측 캐시 (프로브가 쓴다)
+<plugin>/scripts/track/                       CLI · 서버 · UI
 ```
+
+`<root>` 는 이 순서로 정해진다 — `$CLAUDE_TRACK_ROOT` → `~/.claude/ledger.json` 의 `root`
+→ `$OBSIDIAN_VAULT` → 현재 레포의 `.claude/`. 원장 어댑터와 같은 설정을 읽으므로
+트랙 문서는 결정 원장 옆에 산다.
