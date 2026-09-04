@@ -2,7 +2,15 @@
   "name": "design-pipeline",
   "version": "0.1.0",
   "description": "설계를 결정 원장에 확정하고, 리뷰 크기 슬라이스로 잘라, 게이트를 통과한 diff만 사람에게 보낸다.",
-  "author": { "name": "5hseok", "url": "https://github.com/5hseok" },
+  "author": {
+    "name": "5hseok",
+    "url": "https://github.com/5hseok"
+  },
   "repository": "https://github.com/5hseok/hanipman-gate",
-  "keywords": ["claude-code", "code-review", "korean"]
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "code-review",
+    "korean"
+  ]
 }

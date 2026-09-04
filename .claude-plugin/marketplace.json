@@ -15,6 +15,7 @@
         "name": "5hseok"
       },
       "repository": "https://github.com/5hseok/hanipman-gate",
+      "license": "MIT",
       "category": "productivity",
       "keywords": [
         "code-review",
@@ -44,6 +45,7 @@
         "name": "5hseok"
       },
       "repository": "https://github.com/5hseok/hanipman-gate",
+      "license": "MIT",
       "category": "productivity",
       "keywords": [
         "multi-repo",
@@ -67,6 +69,7 @@
         "name": "5hseok"
       },
       "repository": "https://github.com/5hseok/hanipman-gate",
+      "license": "MIT",
       "category": "productivity",
       "keywords": [
         "explain",
@@ -90,6 +93,7 @@
         "name": "5hseok"
       },
       "repository": "https://github.com/5hseok/hanipman-gate",
+      "license": "MIT",
       "category": "productivity",
       "keywords": [
         "sessions",

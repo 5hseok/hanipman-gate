@@ -2,7 +2,17 @@
   "name": "session-board",
   "version": "0.1.0",
   "description": "지금 어느 세션이 어디까지 갔는지를 한 장의 Artifact 보드로. CLI도 서버도 없다.",
-  "author": { "name": "5hseok", "url": "https://github.com/5hseok" },
+  "author": {
+    "name": "5hseok",
+    "url": "https://github.com/5hseok"
+  },
   "repository": "https://github.com/5hseok/hanipman-gate",
-  "keywords": ["claude-code", "sessions", "artifact", "board", "korean"]
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "sessions",
+    "artifact",
+    "board",
+    "korean"
+  ]
 }

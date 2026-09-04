@@ -2,7 +2,15 @@
   "name": "track-ledger",
   "version": "0.1.0",
   "description": "여러 레포·여러 세션에 걸친 작업 순서를 기억이 아니라 읽기 전용 프로브로 들고 있는다.",
-  "author": { "name": "5hseok", "url": "https://github.com/5hseok" },
+  "author": {
+    "name": "5hseok",
+    "url": "https://github.com/5hseok"
+  },
   "repository": "https://github.com/5hseok/hanipman-gate",
-  "keywords": ["claude-code", "code-review", "korean"]
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "code-review",
+    "korean"
+  ]
 }
