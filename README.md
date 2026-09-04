@@ -50,6 +50,7 @@ AI가 코드를 쓰기 시작하면서 병목이 옮겨갔다. 생성은 빨라�
 | `design-pipeline` | 결정 원장 → 슬라이스 → 게이트 → 리뷰 가이드 | 설계하고 구현할 때. 이게 본체다 |
 | `track-ledger` | 여러 레포·세션의 순서를 프로브로 실측 | 세션을 여럿 돌리거나 배포 순서가 얽힐 때 |
 | `explain-aids` | 설계·diff 이해용 인터랙티브 HTML | 큰 변경을 남에게(또는 미래의 나에게) 설명해야 할 때 |
+| `session-board` | 세션 현황을 Artifact 한 장으로 | 트랙 문서까지는 과하고 "지금 뭐가 어디까지 갔나" 만 보고 싶을 때 |
 
 ---
 
@@ -72,6 +73,14 @@ AI가 코드를 쓰기 시작하면서 병목이 옮겨갔다. 생성은 빨라�
 |---|---|
 | `track-ledger` | 트랙 생성·운영 |
 | `track-ledger-policy` | 불변 규칙과 세션 간 통신 기준 |
+
+### session-board
+
+| 스킬 | 역할 |
+|---|---|
+| `session-board` | Claude 세션 레지스트리를 읽어 보드를 Artifact 로 게시하고 같은 URL 로 갱신 |
+
+CLI 도 서버도 없다. `track-ledger` 가 무겁게 느껴지면 이쪽부터 써도 된다.
 
 ### explain-aids
 
@@ -131,9 +140,8 @@ ledger doctor                                  # 어느 백엔드가 왜 골라�
 
 작업 중인 레포다. 지금은 다음이 미완이다.
 
-- 트랙 엔진 이관 (`scripts/track/`)
-- Artifact 보드 — 로컬 서버 없이 보는 트랙 보드
 - 예시 문서 (`examples/`)
+- LICENSE (public 전환 시 결정)
 
 ---
 

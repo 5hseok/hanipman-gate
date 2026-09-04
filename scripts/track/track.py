@@ -18,6 +18,7 @@
 공통 옵션: --track <이름 일부>   (생략하면 가장 최근 트랙)
 """
 import sys, os, json, argparse, re, subprocess
+from datetime import datetime
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -474,6 +475,69 @@ def cmd_graph(args):
     print(json.dumps(T.session_graph(days=args.days), ensure_ascii=False, indent=1))
 
 
+_HOME = os.path.expanduser("~")
+# 문서 경로는 파일명만 남긴다. 어느 키에 있든 같은 규칙을 쓴다.
+_PATH_KEYS = {"path", "file", "task", "doc"}
+
+
+def _sanitize(o, key=None):
+    """보드에 실을 상태에서 로컬 절대경로를 걷어낸다.
+
+    레포명·브랜치명은 남긴다 — 그게 보드의 내용이다. 지우는 것은 사용자명과
+    머신 구조를 드러내는 파일시스템 경로뿐이다."""
+    if isinstance(o, dict):
+        return {k: _sanitize(v, k) for k, v in o.items() if k != "cwd"}
+    if isinstance(o, list):
+        return [_sanitize(v, key) for v in o]
+    if isinstance(o, str):
+        if key in _PATH_KEYS and o.startswith("/") and o.endswith(".md"):
+            return os.path.basename(o)
+        if _HOME and _HOME in o:
+            return o.replace(_HOME, "~")
+        return o
+    return o
+
+
+def cmd_board(args):
+    """상태를 인라인한 자기완결 HTML 하나를 만든다.
+    서버도 포트도 데몬도 없다. 그대로 Artifact 로 올리면 폰에서도 열린다."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, here)
+    import trackd
+
+    if args.track:
+        trackd.switch_track(args.track)
+    state = trackd.build_state()
+    if state is None:
+        print("트랙이 없다. 먼저 track init 으로 만들어라.", file=sys.stderr)
+        return 2
+
+    with open(os.path.join(here, "ui", "index.html"), encoding="utf-8") as f:
+        html = f.read()
+
+    snapped = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M")
+    state = _sanitize(json.loads(json.dumps(state, ensure_ascii=False)))
+
+    inject = (
+        "<script>\n"
+        "window.__TRACK_STATE__ = " + json.dumps(state, ensure_ascii=False) + ";\n"
+        "window.__TRACK_SNAPPED_AT__ = " + json.dumps(snapped) + ";\n"
+        "</script>\n"
+    )
+    marker = "<script>"
+    i = html.find(marker)
+    if i < 0:
+        print("UI 템플릿에서 script 태그를 찾지 못했다", file=sys.stderr)
+        return 1
+    html = html[:i] + inject + html[i:]
+
+    out = args.out or os.path.join(os.getcwd(), "track-board.html")
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(html)
+    print(out)
+    return 0
+
+
 def cmd_serve(args):
     here = os.path.dirname(os.path.abspath(__file__))
     os.execv(sys.executable, [sys.executable, os.path.join(here, "trackd.py"),
@@ -546,6 +610,9 @@ def main():
     p = sub.add_parser("serve"); p.add_argument("--port", type=int, default=4747)
     p.add_argument("--host", default="127.0.0.1", help="기본 루프백. 다른 기기에서 보려면 0.0.0.0")
     p.set_defaults(f=cmd_serve)
+    p = sub.add_parser("board", help="상태를 인라인한 정적 HTML 하나 생성 (서버 불필요)")
+    p.add_argument("--out", help="출력 경로 (기본: ./track-board.html)")
+    p.set_defaults(f=cmd_board)
     p = sub.add_parser("init"); p.add_argument("--title", required=True); p.add_argument("--id"); p.set_defaults(f=cmd_init)
 
     a = ap.parse_args()

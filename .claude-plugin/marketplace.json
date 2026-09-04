@@ -80,6 +80,28 @@
         "./skills/explain-diff-html"
       ],
       "agents": []
+    },
+    {
+      "name": "session-board",
+      "source": ".",
+      "description": "지금 어느 세션이 어디까지 갔는지를 한 장의 Artifact 보드로 만들고 같은 URL 로 갱신한다. 원장 문서도 CLI 도 로컬 서버도 없다.",
+      "version": "0.1.0",
+      "author": {
+        "name": "5hseok"
+      },
+      "repository": "https://github.com/5hseok/hanipman-gate",
+      "category": "productivity",
+      "keywords": [
+        "sessions",
+        "artifact",
+        "board",
+        "parallel-sessions",
+        "lightweight"
+      ],
+      "skills": [
+        "./skills/session-board"
+      ],
+      "agents": []
     }
   ]
 }

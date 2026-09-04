@@ -583,7 +583,10 @@ function apply(state){
   S=state;
   renderSummary(); renderChain(); renderSignals(); renderDecisions(); renderGraph();
 }
+// 정적 스냅샷 모드 — track board 가 상태를 인라인해 두면 서버를 부르지 않는다.
+var STATIC = !!window.__TRACK_STATE__;
 function fetchState(q){
+  if(STATIC){ apply(window.__TRACK_STATE__); return Promise.resolve(); }
   return fetch('/api/state'+(q||'')).then(function(r){return r.json();}).then(apply);
 }
 document.getElementById('chain').addEventListener('click',function(e){
@@ -593,11 +596,13 @@ document.getElementById('chain').addEventListener('keydown',function(e){
   var c=e.target.closest('.card'); if(c&&(e.key==='Enter'||e.key===' ')){e.preventDefault();showDetail(c.dataset.id);}
 });
 document.getElementById('reverify').addEventListener('click',function(){
+  if(STATIC) return;
   var b=this; b.disabled=true; b.textContent='실측 중…';
   fetch('/api/verify',{method:'POST'}).then(function(r){return r.json();}).then(function(s){apply(s);})
     .catch(function(){}).then(function(){b.disabled=false;b.textContent='지금 실측';});
 });
 Array.prototype.slice.call(document.querySelectorAll('.gbtn')).forEach(function(b){
+  if(STATIC){ b.disabled=true; b.title='스냅샷에서는 바꿀 수 없다'; return; }
   b.addEventListener('click',function(){
     if(b.dataset.mode)gmode=b.dataset.mode;
     if(b.dataset.hours)ghours=+b.dataset.hours;
@@ -605,6 +610,7 @@ Array.prototype.slice.call(document.querySelectorAll('.gbtn')).forEach(function(
   });
 });
 document.getElementById('tsel').addEventListener('change',function(){
+  if(STATIC) return;
   sel=null;
   fetchState('?track='+encodeURIComponent(this.value)+'&mode='+encodeURIComponent(gmode)+'&hours='+ghours);
 });
@@ -613,6 +619,14 @@ window.addEventListener('resize',function(){ if(S) renderChain(); });
 
 function connect(){
   var c=document.getElementById('conn');
+  if(STATIC){
+    c.className='conn off';
+    c.querySelector('span').textContent='스냅샷 · '+(window.__TRACK_SNAPPED_AT__||'시각 미상');
+    var rv=document.getElementById('reverify');
+    if(rv){ rv.disabled=true; rv.textContent='스냅샷'; }
+    var ts=document.getElementById('tsel'); if(ts) ts.disabled=true;
+    return;
+  }
   es=new EventSource('/events');
   es.onopen=function(){c.className='conn';c.querySelector('span').textContent='연결됨';};
   es.onmessage=function(ev){ try{ apply(JSON.parse(ev.data)); }catch(e){} };

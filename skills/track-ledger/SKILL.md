@@ -109,6 +109,7 @@ track next              # 지금 할 것 한 줄
 track impact            # 팀에 요청할 것만
 track serve             # 실시간 UI — 환경 레인 × 게이트 체인 · 결정 레인 · 세션 그래프
                         #   기본은 루프백. 다른 기기에서 보려면 --host 0.0.0.0
+track board             # 같은 화면을 정적 HTML 한 장으로. 서버 없이 Artifact 로 올린다
 ```
 
 각 세션에는 **문서 경로가 아니라 브리프를 넘긴다**:
